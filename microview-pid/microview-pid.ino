@@ -8,11 +8,15 @@
 #include <AD8495.h>
 
 //pindef
+//for WS2812 on the rotary encoder
 #define datPin A4
 #define clkPin A5
+//rotary encoder
 #define APin 2
 #define BPin 3
+//encoder button
 #define pinDefBtnPin 5
+//relay
 #define outPin 6
 
 //PID init
