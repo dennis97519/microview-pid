@@ -1,3 +1,5 @@
+#include <max6675.h>
+
 #include <EEPROM.h>
 #include <PID_AutoTune_v0.h>
 #include <PID_v1.h>
@@ -27,8 +29,8 @@ double pidSet=defaultSet;
 double kp=40;
 double ki=1;
 double kd=1;
-PID pid(&pidIn,&pidOut,&pidSet,kp,ki,kd,P_ON_M,DIRECT);
-int WindowSize = 5000;
+PID pid(&pidIn,&pidOut,&pidSet,kp,ki,kd,P_ON_E,DIRECT);
+int WindowSize = 500;//<------------------------------------------------------------------------------------------------------------------
 unsigned long windowStartTime;
 
 
@@ -191,6 +193,7 @@ class Button{
 };
 
 //inputs
+MAX6675 tcm(A3,A1,A0);
 AD8495 tc(2);
 EncWrap enc(BPin,APin);
 Button btn(pinDefBtnPin);
@@ -255,7 +258,7 @@ void dispTemp(int curr,int set,int perc,int sec,bool on,bool inATune=false,unsig
   uView.setCursor(24,0);
 
   unsigned long now=millis();
-  if(now-lastUpdate>500){
+  if(now-lastUpdate>500){//display update rate
     lastTemp=curr;
     lastUpdate=now;
   }
@@ -478,15 +481,22 @@ void setup() {
   atune.SetControlType(1);
   atune.SetLookbackSec(aTuneLookBack);
   atune.SetNoiseBand(aTuneNoise);
-  tc.init();
+  //tc.init();
 }
-
+int lastprint=0;
 void loop() {
   // put your main code here, to run repeatedly:
 	//read sensor
-  tc.poll();
-  if(millis()%100<5)pidIn=tc.tempC();
-
+  //tc.poll();
+  if(millis()%100<5)pidIn=tcm.readCelsius();//.tempC();<--------------------------------------------------------------------------------------------
+  if(millis()%1000<50){
+    int curprint=millis()/1000;
+    if(curprint!=lastprint){
+      Serial.println(tcm.readCelsius());
+      lastprint=curprint;
+    }
+  }
+  
   //run pid
   pid.SetMode(pidMode);
   bool pidComputed=pid.Compute();//sync time window
